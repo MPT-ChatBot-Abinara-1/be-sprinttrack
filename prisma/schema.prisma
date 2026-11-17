@@ -1,0 +1,135 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  GM
+  STAFF_AHLI
+  STAFF
+}
+
+enum Division {
+  MEKANIK
+  ELEKTRIK
+  PEMROGRAMAN
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReviewDecision {
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String   @unique // FR-02: WhatsApp number for bot integration
+  role      Role     @default(STAFF)
+  division  Division
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedTasks Task[]        @relation("AssignedTasks")
+  activityLogs  ActivityLog[]
+  reviewsDone   TaskReview[]
+
+  @@map("users")
+}
+
+model Sprint {
+  id        String      @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  stories   UserStory[]
+
+  @@map("sprints")
+}
+
+model UserStory {
+  id          String   @id @default(uuid())
+  sprintId    String
+  title       String
+  description String?
+  deadline    DateTime // FR-05: Parent deadline validation
+  isCompleted Boolean  @default(false) // FR-04: Selesai jika seluruh sub-task Done
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sprint      Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@map("user_stories")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  storyId     String
+  title       String
+  description String?
+  status      TaskStatus @default(TODO) // FR-06: To Do, In Progress, Review, Done
+  priority    Priority   @default(MEDIUM)
+  deadline    DateTime   // FR-05: Validation <= story deadline
+  division    Division
+  assigneeId  String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  story       UserStory     @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  assignee    User          @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  logs        ActivityLog[]
+  reviews     TaskReview[]
+
+  @@map("tasks")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  message   String
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
+}
+
+model TaskReview {
+  id           String         @id @default(uuid())
+  taskId       String
+  reviewerId   String
+  decision     ReviewDecision
+  revisionNote String?        // FR-11: Catatan revisi wajib bila rejected
+  createdAt    DateTime       @default(now())
+
+  task         Task           @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reviewer     User           @relation(fields: [reviewerId], references: [id])
+
+  @@map("task_reviews")
+}
