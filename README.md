@@ -1,153 +1,107 @@
 # be-sprinttrack
 
-Backend REST API & Real-time Service untuk **SprintTrack Abinara-1** (Tim Robotik Abinara ITS) menggunakan **Node.js, Express, TypeScript, Socket.io, dan Prisma ORM (PostgreSQL)**.
+Layanan Backend REST API dan WebSocket real-time untuk sistem manajemen sprint **SprintTrack Abinara-1** (Tim Robotik Abinara ITS). Repositori ini menyediakan kerangka server berbasis Express, TypeScript, Socket.io, dan Prisma ORM (PostgreSQL), lengkap dengan skema relasional database, middleware autentikasi JWT, kontrol akses berbasis peran (RBAC), serta endpoint integrasi untuk klien web dan WhatsApp Bot.
 
-Template ini menyediakan struktur endpoint, skema database hierarkis Prisma, middleware autentikasi/RBAC, dan broadcast WebSocket sesuai **PRD Baseline Sprint 1** tanpa memuat logika bisnis rumit sehingga developer siap melanjutkan implementasinya.
+## Prasyarat
 
----
+- Node.js v18 atau lebih baru
+- npm v9 atau lebih baru
+- PostgreSQL (lokal atau layanan cloud)
 
-## 🎯 Pemetaan Arsitektur ke PRD
+## Teknologi Utama
 
-| Kebutuhan PRD | Deskripsi | Letak File Template |
-|---|---|---|
-| **FR-01 & FR-02** | Autentikasi pengguna, peran (GM, Staff Ahli, Staff), divisi, & nomor WhatsApp | `prisma/schema.prisma`<br>`src/routes/auth.routes.ts`<br>`src/middlewares/auth.middleware.ts` |
-| **FR-03 & FR-05** | Manajemen pembuatan tugas, atribut prioritas, & validasi deadline | `src/routes/task.routes.ts` |
-| **FR-06 & FR-08** | Papan Kanban 4 kolom (To Do, In Progress, Review, Done) & filter divisi | `src/routes/task.routes.ts` (`GET /tasks`) |
-| **FR-07** | Sinkronisasi perubahan status kartu Kanban real-time via WebSocket (<= 5 detik) | `src/lib/socket.ts`<br>`src/routes/task.routes.ts` |
-| **FR-10 & NFR-2** | Akses terbatas: Staff hanya dapat mengubah tugas milik sendiri (*ownership check*) | `src/middlewares/auth.middleware.ts`<br>`src/routes/task.routes.ts` |
-| **FR-11** | Alur review hasil kerja oleh Staff Ahli (Approve ke Done / Reject dengan catatan revisi) | `src/routes/task.routes.ts` (`POST /tasks/:id/review`) |
-| **FR-13 & FR-14** | Endpoint integrasi WhatsApp Bot (validasi kepemilikan, update status, catat log) | `src/routes/bot.routes.ts` |
-| **FR-15 & FR-16** | Data analitik sprint (Burndown Chart & ringkasan performa) | `src/routes/sprint.routes.ts` |
+- Node.js & TypeScript
+- Express
+- Prisma ORM & PostgreSQL
+- Socket.io
+- JSON Web Token (JWT) & bcryptjs
 
----
+## Instalasi dan Menjalankan Proyek
 
-## 📁 Struktur Direktori
+1. Clone repositori ini:
 
-```text
-be-sprinttrack/
-├── .env.example               # Contoh variabel environment
-├── .gitignore                 # Konfigurasi ignore git
-├── package.json               # Dependensi & skrip npm
-├── tsconfig.json              # Konfigurasi TypeScript
-├── README.md                  # Panduan proyek
-├── prisma/
-│   └── schema.prisma          # Skema model Prisma (Sprint, Story, Task, User, dll)
-└── src/
-    ├── index.ts               # Inisialisasi Express & Server Socket.io
-    ├── config/
-    │   └── env.ts             # Parsing konfigurasi environment
-    ├── lib/
-    │   ├── prisma.ts          # Prisma Client instance
-    │   └── socket.ts          # Inisialisasi & helper broadcast Socket.io
-    ├── middlewares/
-    │   └── auth.middleware.ts # JWT verification, RBAC role guard, & Bot API Key guard
-    └── routes/
-        ├── index.ts           # Router utama (/api/v1)
-        ├── auth.routes.ts     # Endpoint login, registrasi, & profil (FR-01/02)
-        ├── task.routes.ts     # Endpoint Kanban, status update, review, & log (FR-03/06/07/11)
-        ├── bot.routes.ts      # Endpoint khusus integrasi WhatsApp Bot (FR-13/14)
-        └── sprint.routes.ts   # Endpoint analitik Burndown & laporan sprint (FR-15/16)
-```
+   ```bash
+   git clone https://github.com/MPT-ChatBot-Abinara-1/be-sprinttrack.git
+   cd be-sprinttrack
+   ```
 
----
+2. Pasang seluruh dependensi:
 
-## 🚀 Cara Menjalankan
+   ```bash
+   npm install
+   ```
 
-### 1. Salin Environment
-```bash
-cp .env.example .env
-```
-Sesuaikan `DATABASE_URL` ke database PostgreSQL lokal atau Cloud Anda.
+3. Salin file konfigurasi environment dan sesuaikan nilainya:
 
-### 2. Pasang Dependensi
-```bash
-npm install
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-### 3. Generate Prisma Client & Jalankan Migrasi
-```bash
-npx prisma generate
-npx prisma migrate dev --name init
-```
+   Untuk Windows PowerShell:
 
-### 4. Jalankan Server Mode Pengembangan
-```bash
-npm run dev
-```
-Server akan berjalan di `http://localhost:4000` dengan WebSocket aktif.
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-Backend REST API & Real-time Service untuk **SprintTrack Abinara-1** (Tim Robotik Abinara ITS) menggunakan **Node.js, Express, TypeScript, Socket.io, dan Prisma ORM (PostgreSQL)**.
+   Sesuaikan nilai `DATABASE_URL`, `JWT_SECRET`, `BOT_API_KEY`, dan `CLIENT_ORIGIN` pada file `.env`.
 
-Template ini menyediakan struktur endpoint, skema database hierarkis Prisma, middleware autentikasi/RBAC, dan broadcast WebSocket sesuai **PRD Baseline Sprint 1** tanpa memuat logika bisnis rumit sehingga developer siap melanjutkan implementasinya.
+4. Generate Prisma Client dan jalankan migrasi database:
 
----
+   ```bash
+   npm run prisma:generate
+   npm run prisma:migrate
+   ```
 
-## 🎯 Pemetaan Arsitektur ke PRD
+5. Jalankan server dalam mode pengembangan:
 
-| Kebutuhan PRD | Deskripsi | Letak File Template |
-|---|---|---|
-| **FR-01 & FR-02** | Autentikasi pengguna, peran (GM, Staff Ahli, Staff), divisi, & nomor WhatsApp | `prisma/schema.prisma`<br>`src/routes/auth.routes.ts`<br>`src/middlewares/auth.middleware.ts` |
-| **FR-03 & FR-05** | Manajemen pembuatan tugas, atribut prioritas, & validasi deadline | `src/routes/task.routes.ts` |
-| **FR-06 & FR-08** | Papan Kanban 4 kolom (To Do, In Progress, Review, Done) & filter divisi | `src/routes/task.routes.ts` (`GET /tasks`) |
-| **FR-07** | Sinkronisasi perubahan status kartu Kanban real-time via WebSocket (<= 5 detik) | `src/lib/socket.ts`<br>`src/routes/task.routes.ts` |
-| **FR-10 & NFR-2** | Akses terbatas: Staff hanya dapat mengubah tugas milik sendiri (*ownership check*) | `src/middlewares/auth.middleware.ts`<br>`src/routes/task.routes.ts` |
-| **FR-11** | Alur review hasil kerja oleh Staff Ahli (Approve ke Done / Reject dengan catatan revisi) | `src/routes/task.routes.ts` (`POST /tasks/:id/review`) |
-| **FR-13 & FR-14** | Endpoint integrasi WhatsApp Bot (validasi kepemilikan, update status, catat log) | `src/routes/bot.routes.ts` |
-| **FR-15 & FR-16** | Data analitik sprint (Burndown Chart & ringkasan performa) | `src/routes/sprint.routes.ts` |
+   ```bash
+   npm run dev
+   ```
 
----
+   Server API dan WebSocket akan berjalan secara default di `http://localhost:4000`. Endpoint health check tersedia di `GET /health`.
 
-## 📁 Struktur Direktori
+6. Untuk membangun dan menjalankan versi produksi:
+
+   ```bash
+   npm run build
+   npm run start
+   ```
+
+## Struktur Proyek
 
 ```text
 be-sprinttrack/
-├── .env.example               # Contoh variabel environment
-├── .gitignore                 # Konfigurasi ignore git
-├── package.json               # Dependensi & skrip npm
-├── tsconfig.json              # Konfigurasi TypeScript
-├── README.md                  # Panduan proyek
+├── .env.example                 # Contoh konfigurasi variabel environment
+├── .gitignore                   # Daftar file dan direktori yang diabaikan Git
+├── package.json                 # Metadata proyek, dependensi, dan skrip npm
+├── tsconfig.json                # Konfigurasi compiler TypeScript
+├── README.md                    # Dokumentasi proyek
 ├── prisma/
-│   └── schema.prisma          # Skema model Prisma (Sprint, Story, Task, User, dll)
+│   └── schema.prisma            # Definisi skema model database PostgreSQL
 └── src/
-    ├── index.ts               # Inisialisasi Express & Server Socket.io
+    ├── index.ts                 # Entry point server Express dan inisialisasi Socket.io
     ├── config/
-    │   └── env.ts             # Parsing konfigurasi environment
+    │   └── env.ts               # Pembaca konfigurasi environment (.env)
     ├── lib/
-    │   ├── prisma.ts          # Prisma Client instance
-    │   └── socket.ts          # Inisialisasi & helper broadcast Socket.io
+    │   ├── prisma.ts            # Instance Prisma Client
+    │   └── socket.ts            # Inisialisasi server dan helper broadcast Socket.io
     ├── middlewares/
-    │   └── auth.middleware.ts # JWT verification, RBAC role guard, & Bot API Key guard
+    │   └── auth.middleware.ts   # Validasi token JWT, guard RBAC, dan Bot API Key
     └── routes/
-        ├── index.ts           # Router utama (/api/v1)
-        ├── auth.routes.ts     # Endpoint login, registrasi, & profil (FR-01/02)
-        ├── task.routes.ts     # Endpoint Kanban, status update, review, & log (FR-03/06/07/11)
-        ├── bot.routes.ts      # Endpoint khusus integrasi WhatsApp Bot (FR-13/14)
-        └── sprint.routes.ts   # Endpoint analitik Burndown & laporan sprint (FR-15/16)
+        ├── index.ts             # Router utama API (/api/v1)
+        ├── auth.routes.ts       # Endpoint autentikasi dan profil pengguna
+        ├── task.routes.ts       # Endpoint pengelolaan tugas, status Kanban, review, dan log
+        ├── sprint.routes.ts     # Endpoint data sprint aktif, burndown, dan laporan performa
+        └── bot.routes.ts        # Endpoint khusus integrasi layanan WhatsApp Bot
 ```
 
----
+## Skrip Tersedia
 
-## 🚀 Cara Menjalankan
-
-### 1. Salin Environment
-```bash
-cp .env.example .env
-```
-Sesuaikan `DATABASE_URL` ke database PostgreSQL lokal atau Cloud Anda.
-
-### 2. Pasang Dependensi
-```bash
-npm install
-```
-
-### 3. Generate Prisma Client & Jalankan Migrasi
-```bash
-npx prisma generate
-npx prisma migrate dev --name init
-```
-
-### 4. Jalankan Server Mode Pengembangan
-```bash
-npm run dev
-```
-Server akan berjalan di `http://localhost:4000` dengan WebSocket aktif.
+| Perintah | Deskripsi |
+| --- | --- |
+| `npm run dev` | Menjalankan server pengembangan dengan hot-reload menggunakan `tsx` |
+| `npm run build` | Mengompilasi TypeScript ke JavaScript di direktori `dist/` |
+| `npm run start` | Menjalankan hasil build produksi dari `dist/index.js` |
+| `npm run typecheck` | Memeriksa validitas tipe TypeScript tanpa menghasilkan file output |
+| `npm run prisma:generate` | Menghasilkan Prisma Client berdasarkan `prisma/schema.prisma` |
+| `npm run prisma:migrate` | Menjalankan migrasi skema Prisma ke database PostgreSQL |
